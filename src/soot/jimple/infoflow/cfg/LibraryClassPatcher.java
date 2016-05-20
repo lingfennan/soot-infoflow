@@ -31,6 +31,17 @@ public class LibraryClassPatcher {
 	}
 	
 	/**
+	 * Patches Handler and activities. Skip the thread implementation. Because the thread one has false positive.
+	 */
+	public void patchLibrariesExcludeThread() {
+		// Patch the android.os.Handler implementation
+		patchHandlerImplementation();
+		
+		// Patch the android.app.Activity implementation (getApplication())
+		patchActivityImplementation();
+	}
+	
+	/**
 	 * Patches all supported system libraries
 	 */
 	public void patchLibraries() {
@@ -38,7 +49,7 @@ public class LibraryClassPatcher {
 		patchHandlerImplementation();
 		
         // Patch the java.lang.Thread implementation
-		// patchThreadImplementation();
+		patchThreadImplementation();
 		
 		// Patch the android.app.Activity implementation (getApplication())
 		patchActivityImplementation();

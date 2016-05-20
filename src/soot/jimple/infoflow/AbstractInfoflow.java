@@ -52,6 +52,7 @@ public abstract class AbstractInfoflow implements IInfoflow {
 	
 	protected final String androidPath;
 	protected final boolean forceAndroidJar;
+	protected boolean useThreadPatch = true;
 	protected IInfoflowConfig sootConfig;
 	
     /**
@@ -329,7 +330,8 @@ public abstract class AbstractInfoflow implements IInfoflow {
         
         // Patch the system libraries we need for callgraph construction
         LibraryClassPatcher patcher = new LibraryClassPatcher();
-        patcher.patchLibraries();
+        if (useThreadPatch) patcher.patchLibraries();
+        else patcher.patchLibrariesExcludeThread();
 		
         // To cope with broken APK files, we convert all classes that are still
         // dangling after resolution into phantoms

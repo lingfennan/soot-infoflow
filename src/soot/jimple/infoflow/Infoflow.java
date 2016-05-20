@@ -216,7 +216,9 @@ public class Infoflow extends AbstractInfoflow {
 
 		// Build the callgraph
 		long beforeCallgraph = System.nanoTime();
-		constructCallgraph();
+		// TODO (ruian): For call graph, I would like to use my own thread patches.
+		this.useThreadPatch = false;
+		constructCallgraph(); 
 		logger.info("Callgraph construction took " + (System.nanoTime() - beforeCallgraph) / 1E9
 				+ " seconds");
 
