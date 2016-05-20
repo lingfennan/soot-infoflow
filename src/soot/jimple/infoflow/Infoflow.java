@@ -60,9 +60,11 @@ import soot.jimple.infoflow.solver.IMemoryManager;
 import soot.jimple.infoflow.solver.cfg.BackwardsInfoflowCFG;
 import soot.jimple.infoflow.solver.cfg.IInfoflowCFG;
 import soot.jimple.infoflow.solver.fastSolver.InfoflowSolver;
+import soot.jimple.infoflow.source.DefaultSourceSinkManager;
 import soot.jimple.infoflow.source.ISourceSinkManager;
 import soot.jimple.infoflow.util.SootMethodRepresentationParser;
 import soot.jimple.infoflow.util.SystemClassHandler;
+import soot.jimple.toolkits.callgraph.CallGraph;
 import soot.jimple.toolkits.callgraph.ReachableMethods;
 import soot.options.Options;
 /**
@@ -176,6 +178,52 @@ public class Infoflow extends AbstractInfoflow {
 
 		// Run the analysis
         runAnalysis(sourcesSinks, seeds);
+	}
+	
+	/**
+	 * Contructs call graph with various capabilities in Soot infoflow. Such as
+	 * library class patching etc.
+	 * 
+	 * @return the constructed call graph
+	 */
+	public CallGraph computeCallGraph(String appPath, String libPath,
+			IEntryPointCreator entryPointCreator,
+			ISourceSinkManager sourcesSinks) {
+		if (sourcesSinks == null) {
+			logger.error("Sources are empty!");
+			return null;
+		}
+
+		initializeSoot(appPath, libPath, entryPointCreator.getRequiredClasses());
+
+		// entryPoints are the entryPoints required by Soot to calculate Graph - if there is no main method,
+		// we have to create a new main method and use it as entryPoint and store our real entryPoints
+		Scene.v().setEntryPoints(Collections.singletonList(entryPointCreator.createDummyMain()));
+
+		// Clear the data from previous runs
+		maxMemoryConsumption = -1;
+
+		// Some configuration options do not really make sense in combination
+		if (config.getEnableStaticFieldTracking()
+				&& InfoflowConfiguration.getAccessPathLength() == 0)
+			throw new RuntimeException("Static field tracking must be disabled "
+					+ "if the access path length is zero");
+		if (InfoflowConfiguration.getAccessPathLength() < 0)
+			throw new RuntimeException("The access path length may not be negative");
+
+		// Clear the base registrations from previous runs
+		AccessPathFactory.v().clearBaseRegister();
+
+		// Build the callgraph
+		long beforeCallgraph = System.nanoTime();
+		constructCallgraph();
+		logger.info("Callgraph construction took " + (System.nanoTime() - beforeCallgraph) / 1E9
+				+ " seconds");
+
+        if (config.getCallgraphAlgorithm() != CallgraphAlgorithm.OnDemand)
+        	logger.info("Callgraph has {} edges", Scene.v().getCallGraph().size());
+
+		return Scene.v().getCallGraph();
 	}
 
 	/**
