@@ -38,7 +38,7 @@ public class LibraryClassPatcher {
 		patchHandlerImplementation();
 		
         // Patch the java.lang.Thread implementation
-		patchThreadImplementation();
+		// patchThreadImplementation();
 		
 		// Patch the android.app.Activity implementation (getApplication())
 		patchActivityImplementation();
